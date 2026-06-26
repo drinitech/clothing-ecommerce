@@ -2,9 +2,10 @@ import { prisma } from "@/lib/prisma"
 import ProductGrid from "@/components/product/product-grid"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
+import { serializeProduct } from "@/lib/utils"
 
 async function getFeaturedProducts() {
-  return prisma.product.findMany({
+  const products = await prisma.product.findMany({
     where: { featured: true, status: "ACTIVE" },
     take: 8,
     include: {
@@ -16,6 +17,7 @@ async function getFeaturedProducts() {
     },
     orderBy: { createdAt: "desc" },
   })
+  return products.map(serializeProduct)
 }
 
 export default async function FeaturedProducts() {

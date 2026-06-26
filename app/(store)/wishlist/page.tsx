@@ -2,6 +2,7 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import ProductGrid from "@/components/product/product-grid"
+import { serializeProduct } from "@/lib/utils"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = { title: "My Wishlist" }
@@ -25,7 +26,7 @@ export default async function WishlistPage() {
     },
   })
 
-  const products = wishlistItems.map((item) => item.product)
+  const products = wishlistItems.map((item) => serializeProduct(item.product))
 
   return (
     <div className="container mx-auto px-4 py-8">

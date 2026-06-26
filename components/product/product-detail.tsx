@@ -81,6 +81,7 @@ export default function ProductDetail({ product }: { product: ProductWithRelatio
                 src={product.images[selectedImage].imageUrl}
                 alt={product.name}
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
                 priority
               />
@@ -102,7 +103,7 @@ export default function ProductDetail({ product }: { product: ProductWithRelatio
                     selectedImage === i ? "border-primary" : "border-transparent"
                   )}
                 >
-                  <Image src={img.imageUrl} alt="" fill className="object-cover" />
+                  <Image src={img.imageUrl} alt="" fill sizes="20vw" className="object-cover" />
                 </button>
               ))}
             </div>

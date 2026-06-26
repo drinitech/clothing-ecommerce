@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { notFound } from "next/navigation"
 import ProductDetail from "@/components/product/product-detail"
 import RelatedProducts from "@/components/product/related-products"
+import { serializeProduct } from "@/lib/utils"
 import type { Metadata } from "next"
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -30,8 +31,9 @@ async function getProduct(slug: string) {
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const product = await getProduct(slug)
-  if (!product) notFound()
+  const raw = await getProduct(slug)
+  if (!raw) notFound()
+  const product = serializeProduct(raw)
 
   return (
     <div className="container mx-auto px-4 py-8">

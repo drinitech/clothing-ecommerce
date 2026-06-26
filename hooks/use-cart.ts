@@ -8,6 +8,7 @@ type CartStore = {
   setItems: (items: CartItemWithProduct[]) => void
   openCart: () => void
   closeCart: () => void
+  clearCart: () => void
 }
 
 export const useCart = create<CartStore>()(
@@ -18,6 +19,7 @@ export const useCart = create<CartStore>()(
       setItems: (items) => set({ items }),
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),
+      clearCart: () => set({ items: [], isOpen: false }),
     }),
     { name: "cart-store" }
   )

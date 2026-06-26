@@ -43,22 +43,23 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const { sizes, colors, images, ...data } = parsed.data
 
-    await prisma.$transaction([
-      prisma.productImage.deleteMany({ where: { productId: id } }),
-      prisma.productSize.deleteMany({ where: { productId: id } }),
-      prisma.productColor.deleteMany({ where: { productId: id } }),
+    await prisma.productImage.deleteMany({ where: { productId: id } })
+    await prisma.productSize.deleteMany({ where: { productId: id } })
+    await prisma.productColor.deleteMany({ where: { productId: id } })
+
+    await prisma.product.update({
+      where: { id },
+      data: { ...data, price: data.price, discountPrice: data.discountPrice ?? null },
+    })
+
+    await Promise.all([
+      ...images.map((url, i) => prisma.productImage.create({ data: { productId: id, imageUrl: url, order: i } })),
+      ...sizes.map((size) => prisma.productSize.create({ data: { productId: id, size } })),
+      ...colors.map(({ color, hex }) => prisma.productColor.create({ data: { productId: id, color, hex: hex ?? null } })),
     ])
 
-    const product = await prisma.product.update({
+    const product = await prisma.product.findUnique({
       where: { id },
-      data: {
-        ...data,
-        price: data.price,
-        discountPrice: data.discountPrice ?? null,
-        images: { create: images.map((url, i) => ({ imageUrl: url, order: i })) },
-        sizes: { create: sizes.map((size) => ({ size })) },
-        colors: { create: colors.map(({ color, hex }) => ({ color, hex })) },
-      },
       include: { category: true, images: true, sizes: true, colors: true },
     })
 

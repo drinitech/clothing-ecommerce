@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -15,9 +15,7 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import axios from "axios"
 import { Category, Product, ProductImage, ProductSize, ProductColor } from "@prisma/client"
-import { UploadButton } from "@uploadthing/react"
-import type { OurFileRouter } from "@/app/api/uploadthing/core"
-import { X, Plus } from "lucide-react"
+import { X, Plus, Upload } from "lucide-react"
 
 type ProductWithRelations = Product & { images: ProductImage[]; sizes: ProductSize[]; colors: ProductColor[] }
 
@@ -32,6 +30,30 @@ export default function AdminProductForm({ categories, product }: AdminProductFo
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [images, setImages] = useState<string[]>(product?.images.map((i) => i.imageUrl) || [])
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      files.forEach((f) => formData.append("files", f))
+      const res = await fetch("/api/upload", { method: "POST", body: formData })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      const next = [...images, ...data.urls]
+      setImages(next)
+      setValue("images", next)
+      toast.success(`${data.urls.length} image${data.urls.length > 1 ? "s" : ""} uploaded!`)
+    } catch {
+      toast.error("Upload failed")
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
 
   const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<ProductInput>({
     resolver: zodResolver(productSchema) as any,
@@ -197,24 +219,35 @@ export default function AdminProductForm({ categories, product }: AdminProductFo
             {images.map((url, i) => (
               <div key={i} className="relative h-24 w-20 rounded-md overflow-hidden bg-muted">
                 <img src={url} alt="" className="w-full h-full object-cover" />
-                <button type="button" onClick={() => setImages(images.filter((_, idx) => idx !== i))}
+                <button type="button" onClick={() => {
+                  const next = images.filter((_, idx) => idx !== i)
+                  setImages(next)
+                  setValue("images", next)
+                }}
                   className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center">
                   <X className="h-3 w-3" />
                 </button>
               </div>
             ))}
           </div>
-          <UploadButton<OurFileRouter, "productImages">
-            endpoint="productImages"
-            onClientUploadComplete={(res) => {
-              const urls = res.map((f) => f.url)
-              const next = [...images, ...urls]
-              setImages(next)
-              setValue("images", next)
-              toast.success("Images uploaded!")
-            }}
-            onUploadError={() => { toast.error("Upload failed") }}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleFileChange}
           />
+          <Button
+            type="button"
+            variant="outline"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            {uploading ? "Uploading..." : "Upload Images"}
+          </Button>
+          <p className="text-xs text-muted-foreground">Select one or more images from your computer. Max 10MB per file.</p>
           {errors.images && <p className="text-xs text-destructive">{errors.images.message as string}</p>}
         </CardContent>
       </Card>

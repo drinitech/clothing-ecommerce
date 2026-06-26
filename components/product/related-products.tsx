@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import ProductGrid from "./product-grid"
+import { serializeProduct } from "@/lib/utils"
 
 export default async function RelatedProducts({
   categoryId,
@@ -8,7 +9,7 @@ export default async function RelatedProducts({
   categoryId: string
   currentProductId: string
 }) {
-  const products = await prisma.product.findMany({
+  const raw = await prisma.product.findMany({
     where: { categoryId, id: { not: currentProductId }, status: "ACTIVE" },
     take: 4,
     include: {
@@ -20,6 +21,7 @@ export default async function RelatedProducts({
     },
     orderBy: { createdAt: "desc" },
   })
+  const products = raw.map(serializeProduct)
 
   if (products.length === 0) return null
 

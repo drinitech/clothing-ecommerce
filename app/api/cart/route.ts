@@ -39,19 +39,27 @@ export async function POST(req: NextRequest) {
       where: { userId: session.user.id, productId, size: size ?? null, color: color ?? null },
     })
 
-    let item
+    const safeSize = size ?? null
+    const safeColor = color ?? null
+
+    let itemId: string
     if (existing) {
-      item = await prisma.cartItem.update({
+      await prisma.cartItem.update({
         where: { id: existing.id },
         data: { quantity: existing.quantity + quantity },
-        include: { product: { include: { images: { take: 1 }, category: true, sizes: true, colors: true, reviews: { select: { rating: true } } } } },
       })
+      itemId = existing.id
     } else {
-      item = await prisma.cartItem.create({
-        data: { userId: session.user.id, productId, quantity, size, color },
-        include: { product: { include: { images: { take: 1 }, category: true, sizes: true, colors: true, reviews: { select: { rating: true } } } } },
+      const created = await prisma.cartItem.create({
+        data: { userId: session.user.id, productId, quantity, size: safeSize, color: safeColor },
       })
+      itemId = created.id
     }
+
+    const item = await prisma.cartItem.findUnique({
+      where: { id: itemId },
+      include: { product: { include: { images: { take: 1 }, category: true, sizes: true, colors: true, reviews: { select: { rating: true } } } } },
+    })
 
     return NextResponse.json(item, { status: 201 })
   } catch {

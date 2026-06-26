@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { signOut } from "next-auth/react"
+import { useCart } from "@/hooks/use-cart"
 import {
   LayoutDashboard, Package, Tag, ShoppingCart, Users, BarChart2, LogOut, Home,
 } from "lucide-react"
@@ -18,6 +19,7 @@ const links = [
 
 export default function AdminSidebar() {
   const pathname = usePathname()
+  const { clearCart } = useCart()
 
   return (
     <aside className="w-60 bg-card border-r flex flex-col">
@@ -49,7 +51,7 @@ export default function AdminSidebar() {
           <Home className="h-4 w-4" /> Back to Store
         </Link>
         <button
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => { clearCart(); signOut({ callbackUrl: "/" }) }}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-destructive hover:bg-destructive/10"
         >
           <LogOut className="h-4 w-4" /> Sign Out

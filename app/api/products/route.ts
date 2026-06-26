@@ -81,18 +81,21 @@ export async function POST(req: NextRequest) {
     const { sizes, colors, images, ...data } = parsed.data
 
     const product = await prisma.product.create({
-      data: {
-        ...data,
-        price: data.price,
-        discountPrice: data.discountPrice ?? null,
-        images: { create: images.map((url, i) => ({ imageUrl: url, order: i })) },
-        sizes: { create: sizes.map((size) => ({ size })) },
-        colors: { create: colors.map(({ color, hex }) => ({ color, hex })) },
-      },
+      data: { ...data, price: data.price, discountPrice: data.discountPrice ?? null },
+    })
+
+    await Promise.all([
+      ...images.map((url, i) => prisma.productImage.create({ data: { productId: product.id, imageUrl: url, order: i } })),
+      ...sizes.map((size) => prisma.productSize.create({ data: { productId: product.id, size } })),
+      ...colors.map(({ color, hex }) => prisma.productColor.create({ data: { productId: product.id, color, hex: hex ?? null } })),
+    ])
+
+    const full = await prisma.product.findUnique({
+      where: { id: product.id },
       include: { category: true, images: true, sizes: true, colors: true },
     })
 
-    return NextResponse.json(product, { status: 201 })
+    return NextResponse.json(full, { status: 201 })
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }

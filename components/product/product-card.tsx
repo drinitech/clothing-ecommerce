@@ -12,6 +12,7 @@ import { useCart } from "@/hooks/use-cart"
 import { toast } from "sonner"
 import { useSession } from "next-auth/react"
 import axios from "axios"
+import { useState, useEffect } from "react"
 
 interface ProductCardProps {
   product: ProductWithRelations
@@ -22,7 +23,9 @@ export default function ProductCard({ product, className }: ProductCardProps) {
   const { toggle, has } = useWishlist()
   const { items, setItems, openCart } = useCart()
   const { data: session } = useSession()
-  const isWishlisted = has(product.id)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const isWishlisted = mounted && has(product.id)
 
   const avgRating = product.reviews.length
     ? product.reviews.reduce((acc, r) => acc + r.rating, 0) / product.reviews.length
@@ -68,7 +71,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
       <Link href={`/products/${product.slug}`}>
         <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-muted">
           {mainImage ? (
-            <Image src={mainImage} alt={product.name} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+            <Image src={mainImage} alt={product.name} fill sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground">No Image</div>
           )}

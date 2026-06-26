@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import ProductGrid from "@/components/product/product-grid"
 import ProductFilters from "@/components/product/product-filters"
 import { Skeleton } from "@/components/ui/skeleton"
+import { serializeProduct } from "@/lib/utils"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = { title: "All Products" }
@@ -37,7 +38,7 @@ async function getProducts(searchParams: Record<string, string>) {
   const page = parseInt(searchParams.page || "1")
   const limit = 12
 
-  const [products, total] = await Promise.all([
+  const [raw, total] = await Promise.all([
     prisma.product.findMany({
       where,
       orderBy,
@@ -54,7 +55,7 @@ async function getProducts(searchParams: Record<string, string>) {
     prisma.product.count({ where }),
   ])
 
-  return { products, total, page, totalPages: Math.ceil(total / limit) }
+  return { products: raw.map(serializeProduct), total, page, totalPages: Math.ceil(total / limit) }
 }
 
 async function getCategories() {

@@ -5,7 +5,7 @@ import { useSession, signOut } from "next-auth/react"
 import { ShoppingBag, Heart, Search, Menu, Sun, Moon, User, ChevronDown, X } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useState } from "react"
-import { useCartCount } from "@/hooks/use-cart"
+import { useCart, useCartCount } from "@/hooks/use-cart"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -32,6 +32,7 @@ export default function Navbar() {
   const { data: session } = useSession()
   const { theme, setTheme } = useTheme()
   const cartCount = useCartCount()
+  const { clearCart } = useCart()
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const router = useRouter()
@@ -152,7 +153,7 @@ export default function Navbar() {
                     </>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })} className="text-destructive">
+                  <DropdownMenuItem onClick={() => { clearCart(); signOut({ callbackUrl: "/" }) }} className="text-destructive">
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
