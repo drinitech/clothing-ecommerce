@@ -6,18 +6,24 @@ import HeroSection from "@/components/home/hero-section"
 import FeaturedProducts from "@/components/home/featured-products"
 import CategoriesSection from "@/components/home/categories-section"
 import PromoSection from "@/components/home/promo-section"
+import { prisma } from "@/lib/prisma"
 
-export default function Home() {
+export default async function Home() {
+  const categories = await prisma.category.findMany({
+    select: { id: true, name: true, slug: true },
+    orderBy: { name: "asc" },
+  })
+
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <Navbar categories={categories} />
       <main className="flex-1">
         <HeroSection />
         <CategoriesSection />
         <FeaturedProducts />
         <PromoSection />
       </main>
-      <Footer />
+      <Footer categories={categories} />
     </div>
   )
 }

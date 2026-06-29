@@ -36,7 +36,7 @@ async function getProducts(searchParams: Record<string, string>) {
       : { createdAt: "desc" as const }
 
   const page = parseInt(searchParams.page || "1")
-  const limit = 12
+  const limit = 24
 
   const [raw, total] = await Promise.all([
     prisma.product.findMany({

@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+type Category = { id: string; name: string; slug: string }
+
 const socialLinks = [
   {
     label: "Instagram",
@@ -39,7 +41,7 @@ const socialLinks = [
   },
 ]
 
-export default function Footer() {
+export default function Footer({ categories = [] }: { categories?: Category[] }) {
   return (
     <footer className="border-t bg-muted/30">
       <div className="container mx-auto px-4 py-12">
@@ -61,13 +63,22 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-3">Shop</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              {["Men", "Women", "Kids", "Shoes", "Accessories", "Sale"].map((item) => (
-                <li key={item}>
-                  <Link href={`/products?category=${item.toLowerCase()}`} className="hover:text-primary transition-colors">
-                    {item}
-                  </Link>
-                </li>
-              ))}
+              {categories.length > 0
+                ? categories.map((cat) => (
+                    <li key={cat.id}>
+                      <Link href={`/products?category=${cat.slug}`} className="hover:text-primary transition-colors">
+                        {cat.name}
+                      </Link>
+                    </li>
+                  ))
+                : ["Men", "Women", "Kids", "Shoes", "Accessories"].map((item) => (
+                    <li key={item}>
+                      <Link href={`/products?category=${item.toLowerCase()}`} className="hover:text-primary transition-colors">
+                        {item}
+                      </Link>
+                    </li>
+                  ))
+              }
             </ul>
           </div>
 
