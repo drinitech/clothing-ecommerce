@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useEffect, useRef } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -10,34 +10,66 @@ import Image from "next/image"
 import Link from "next/link"
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
 import { toast } from "sonner"
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 import { useSession } from "next-auth/react"
 
 export default function CartDrawer({ children }: { children: React.ReactNode }) {
-  const { items, isOpen, openCart, closeCart, setItems } = useCart()
+  const { items, isOpen, openCart, closeCart, setItems, clearCart } = useCart()
   const total = useCartTotal()
   const { data: session } = useSession()
+  const mutatingRef = useRef(false)
+
+  // Sync cart from DB when drawer opens — skip if a mutation is in flight to avoid overwriting optimistic updates
+  useEffect(() => {
+    if (!isOpen || !session?.user?.id) return
+    axios.get("/api/cart")
+      .then(({ data }) => {
+        if (Array.isArray(data) && !mutatingRef.current) setItems(data)
+      })
+      .catch(() => {})
+  }, [isOpen, session?.user?.id])
 
   const updateQuantity = async (itemId: string, quantity: number) => {
+    const prev = items
+    mutatingRef.current = true
+    // Optimistically update local state first
+    if (quantity <= 0) {
+      setItems(items.filter((i) => i.id !== itemId))
+    } else {
+      setItems(items.map((i) => (i.id === itemId ? { ...i, quantity } : i)))
+    }
     try {
       await axios.patch("/api/cart", { itemId, quantity })
-      if (quantity <= 0) {
-        setItems(items.filter((i) => i.id !== itemId))
+    } catch (err) {
+      setItems(prev)
+      const status = (err as AxiosError)?.response?.status
+      if (status === 401) {
+        toast.error("Please login to update your cart")
       } else {
-        setItems(items.map((i) => (i.id === itemId ? { ...i, quantity } : i)))
+        toast.error("Failed to update cart")
       }
-    } catch {
-      toast.error("Failed to update cart")
+    } finally {
+      mutatingRef.current = false
     }
   }
 
   const removeItem = async (itemId: string) => {
+    const prev = items
+    mutatingRef.current = true
+    setItems(items.filter((i) => i.id !== itemId))
     try {
       await axios.delete("/api/cart", { data: { itemId } })
-      setItems(items.filter((i) => i.id !== itemId))
       toast.success("Item removed from cart")
-    } catch {
-      toast.error("Failed to remove item")
+    } catch (err) {
+      setItems(prev)
+      const status = (err as AxiosError)?.response?.status
+      if (status === 401) {
+        toast.error("Please login to update your cart")
+      } else {
+        toast.error("Failed to remove item")
+      }
+    } finally {
+      mutatingRef.current = false
     }
   }
 
