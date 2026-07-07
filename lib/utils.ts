@@ -1,6 +1,5 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import type { Decimal } from "@prisma/client/runtime/library"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -32,8 +31,8 @@ export function calculateDiscount(price: number, discountPrice: number): number 
 }
 
 type WithDecimalPrices<T> = Omit<T, "price" | "discountPrice"> & {
-  price: Decimal
-  discountPrice: Decimal | null
+  price: { toNumber(): number }
+  discountPrice: { toNumber(): number } | null
 }
 
 export function serializeProduct<T extends WithDecimalPrices<T>>(
