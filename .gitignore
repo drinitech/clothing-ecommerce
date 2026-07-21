@@ -47,9 +47,9 @@ yarn-error.log*
 next-env.d.ts
 
 /lib/generated/prisma
-/public/uploads
 
 .vercel
 .env*
 
 .vercel
+.env*
