@@ -3,7 +3,11 @@ import { prisma } from "@/lib/prisma"
 import { getToken } from "next-auth/jwt"
 
 async function getUserId(req: NextRequest): Promise<string | null> {
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET })
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET,
+    secureCookie: req.nextUrl.protocol === "https:",
+  })
   return (token?.id as string) ?? null
 }
 
